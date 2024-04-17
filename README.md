@@ -6,11 +6,12 @@ A git tool to clean the local branches that are deleted [gone] on remote
 
 You can install `git-local-prune` using one of the options listed below
 
-| Source | Command                                                                                                 |
-| ------ | ------------------------------------------------------------------------------------------------------- |
-| curl   | `curl -L https://raw.githubusercontent.com/MathieuDoyon/git-local-prune/master/installer.sh \| sudo sh` |
-| npm    | `npm install -g git-local-prune`                                                                        |
-| manual | Clone and run `make install`                                                                            |
+| Source   | Command                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| curl     | `curl -L https://raw.githubusercontent.com/MathieuDoyon/git-local-prune/master/installer.sh \| sudo sh`                  |
+| npm      | `npm install -g git-local-prune`                                                                                         |
+| manual   | Clone and run `make install`                                                                                             |
+| git-bash | For Windows : `curl -L https://raw.githubusercontent.com/MathieuDoyon/git-local-prune/master/windows-installer.sh \| sh` |
 
 <!-- TODO add brew tap etc. -->
 <!-- | brew | `brew update && brew install git-local-prune` | -->
