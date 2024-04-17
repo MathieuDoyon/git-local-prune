@@ -74,7 +74,7 @@ function writeFile() {
 }
 
 function runLocalPrune() {
-    # Fetch the latest commits, if required
+  # Fetch the latest commits, if required
   if [[ ${option_f:=} ]]; then
     echo "${BOLD}${GREEN}Fetching commits in ${YELLOW}${UNDERLINE}${BOLD}${BASENAME}${NORMAL}"
     git fetch --all --prune > /dev/null 2>&1
@@ -161,7 +161,6 @@ if [[ ${option_L:=} ]]; then
   INCLUDE_LINKS="-L"
 fi
 
-
 # For when the command has been run in a non-repo directory
 if [[ ${option_F:=} || ! -d ".git" || -f ".git" ]]; then
   BASE_DIR=$(pwd)
@@ -208,7 +207,6 @@ for DIR in ${PROJECT_DIRS}; do
     continue
   fi
 
-  
   GIT_LOCAL_PRUNE_COMMAND="git --no-pager branch --v \
     | grep \"\\[gone\\]\" \
     | awk '{print \$1}'
