@@ -1,0 +1,29 @@
+{
+  "name": "git-local-prune",
+  "version": "1.0.0",
+  "description": "git locale prune gone branches on remote",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "git-local-prune": "./git-local-prune"
+  },
+  "keywords": [
+    "git",
+    "local",
+    "prune",
+    "gone",
+    "branches"
+  ],
+  "author": "Mathieu Doyon",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MathieuDoyon/git-local-prune.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MathieuDoyon/git-local-prune/issues"
+  },
+  "homepage": "https://github.com/MathieuDoyon/git-local-prune#readme"
+}

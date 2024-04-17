@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2128
+
+# Shows the usage
+function usage() {
+  cat << EOS
+Usage:
+  git local-prune [-m <max-dir-depth>] [-f] [-F] [-r] [-F] [-L] [-h]
+
+  -h      - Display this help screen
+  -m      - Specify the depth of recursive directory search
+  -f      - Fetch the latest commits beforehand
+  -r      - Generate a file with the report
+  -F      - Force recursion up to specified depth
+  -L      - Toggle inclusion of symbolic links in recursive directory search
+
+Examples:
+  git local-prune -m 3
+EOS
+}
+
+# Sets up the colored output
+function colored() {
+  RED=$(tput setaf 1)
+  GREEN=$(tput setaf 2)
+  YELLOW=$(tput setaf 3)
+  BLUE=$(tput setaf 4)
+  BOLD=$(tput bold)
+  UNDERLINE=$(tput smul)
+  NORMAL=$(tput sgr0)
+
+  GIT_PRETTY_DATE="%cd"
+  if [[ ${option_R:=} ]]; then
+    GIT_PRETTY_DATE="%ad"
+  fi
+
+  GIT_PRETTY_FORMAT="%Cred%h%Creset - %s %Cgreen($GIT_PRETTY_DATE) %C(bold blue)<%an>%Creset"
+  COLOR=always
+
+  if [[ ${option_g:=} ]]; then
+    GIT_PRETTY_FORMAT="$GIT_PRETTY_FORMAT %C(yellow)gpg: %G?%Creset"
+  fi
+}
+
+# Sets up the uncolored output
+function uncolored() {
+  # shellcheck disable=SC2034
+  RED=""
+  GREEN=""
+  YELLOW=""
+  # shellcheck disable=SC2034
+  BLUE=""
+  BOLD=""
+  UNDERLINE=""
+  NORMAL=""
+
+  GIT_PRETTY_DATE="%cd"
+  if [[ $option_R ]]; then
+    GIT_PRETTY_DATE="%ad"
+  fi
+
+  GIT_PRETTY_FORMAT="%h - %s ($GIT_PRETTY_DATE) <%an>"
+  COLOR=never
+
+  if [[ $option_g ]]; then
+    GIT_PRETTY_FORMAT="$GIT_PRETTY_FORMAT gpg: %G?\n"
+  else
+    GIT_PRETTY_FORMAT="$GIT_PRETTY_FORMAT \n"
+  fi
+}
+
+function writeFile() {
+  echo -e "$1" >> "${REPORT_FILE_PATH}"
+}
+
+function runLocalPrune() {
+    # Fetch the latest commits, if required
+  if [[ ${option_f:=} ]]; then
+    echo "${BOLD}${GREEN}Fetching commits in ${YELLOW}${UNDERLINE}${BOLD}${BASENAME}${NORMAL}"
+    git fetch --all --prune > /dev/null 2>&1
+  fi
+
+  {
+    # shellcheck disable=SC2086
+    GITOUT=$(eval ${GIT_LOCAL_PRUNE_COMMAND} 2> /dev/null)
+  } || {
+    GITOUT=""
+  }
+
+  # If `r` option was given then no output, just write the report
+  if [[ -n ${option_r:=} ]]; then
+    if [[ -n "$GITOUT" ]]; then
+      writeFile "${CUR_DIR}\n $GITOUT"
+    fi
+  else
+    ## Only output if there is some activity
+    if [[ -n "$GITOUT" ]]; then
+      echo "${BOLD}${UNDERLINE}${YELLOW}$CUR_DIR${NORMAL}"
+      echo "$GITOUT"
+    else
+      echo "${BOLD}${UNDERLINE}${YELLOW}$CUR_DIR${NORMAL}"
+      echo "${YELLOW}No local branch gone on remote!${NORMAL}"
+    fi
+  fi
+}
+
+while getopts "hfm:LrF" opt; do
+  case $opt in
+    h | f | m | L | r | F)
+      declare "option_$opt=${OPTARG:-0}"
+      ;;
+    \?)
+      echo >&2 "Use 'git local-prune -h' to see usage info"
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [[ $# -gt 0 ]]; then
+  echo >&2 "Invalid arguments: $*"
+  echo >&2 "Use 'git locale-prune -h' to see usage info"
+  exit 1
+fi
+
+# Main script
+if [[ ${option_h:=} ]]; then
+  usage
+  exit 0
+fi
+
+# Use colors, but only if connected to a terminal, and that terminal supports them.
+if [[ -t 1 ]] && [[ -n "$TERM" ]] && command -v tput &> /dev/null && tput colors &> /dev/null; then
+  ncolors=$(tput colors)
+  if [[ -n "$ncolors" ]] && [[ "$ncolors" -ge 8 ]] && [[ -z "$option_r" ]]; then
+    colored
+  else
+    uncolored
+  fi
+else
+  uncolored
+fi
+
+## Set the necessary variables for local-prune
+MAXDEPTH=2
+INCLUDE_LINKS=
+RAN_FROM_DIR=$(pwd)
+REPORT_FILE_PATH="${RAN_FROM_DIR}/git-local-prune-report.txt"
+
+# If report is to be generated, remove the existing report file if any
+if [[ -n $option_r ]]; then
+  rm -rf "${REPORT_FILE_PATH}"
+fi
+
+if [[ ${option_m:=} ]]; then
+  MAXDEPTH="$((${option_m:=} + 1))"
+fi
+
+if [[ ${option_L:=} ]]; then
+  INCLUDE_LINKS="-L"
+fi
+
+
+# For when the command has been run in a non-repo directory
+if [[ ${option_F:=} || ! -d ".git" || -f ".git" ]]; then
+  BASE_DIR=$(pwd)
+  # Set delimiter to newline for the loop
+  IFS=$'\n'
+
+  if [[ -f ".git-local-prune-whitelist" ]]; then
+    SEARCH_PATH=$(cat .git-local-prune-whitelist)
+  else
+    SEARCH_PATH=.
+  fi
+
+  # Recursively search for git repositories
+  PROJECT_DIRS=$(find ${INCLUDE_LINKS} ${SEARCH_PATH} -maxdepth ${MAXDEPTH} -mindepth 0 -name .git)
+elif [[ -f ".git" || -d ".git" ]]; then
+  PROJECT_DIRS=("$(pwd)/.git")
+fi
+
+# if project directories is still empty
+# we might be sitting inside a git repo
+if [[ -z ${PROJECT_DIRS} ]]; then
+  ROOT_DIR_COMMAND="git rev-parse --show-toplevel"
+  PROJECT_ROOT=$(eval "${ROOT_DIR_COMMAND}" 2> /dev/null)
+
+  if [[ -z ${PROJECT_ROOT} ]]; then
+    echo "${YELLOW}You must be inside a git repository!${NORMAL}"
+    exit 0
+  fi
+
+  PROJECT_DIRS=("${PROJECT_ROOT}/.git")
+fi
+
+# Foreach of the project directories, run the local-prune
+IFS=$'\n'
+for DIR in ${PROJECT_DIRS}; do
+  PROJECT_DIR=$(dirname "$DIR")
+  cd "$PROJECT_DIR" || exit
+  CUR_DIR=$(pwd)
+  BASENAME=$(basename "$CUR_DIR")
+
+  # continue if not a git directory
+  if [[ ! -d ".git" || -f ".git" ]]; then
+    cd "${BASE_DIR}" || exit
+    continue
+  fi
+
+  
+  GIT_LOCAL_PRUNE_COMMAND="git --no-pager branch --v \
+    | grep \"\\[gone\\]\" \
+    | awk '{print \$1}'
+    | xargs git branch -D"
+
+  runLocalPrune
+
+  cd "${BASE_DIR}" || exit
+done
+unset IFS
