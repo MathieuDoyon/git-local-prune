@@ -99,7 +99,7 @@ If you have many repositories that you want to generate a local-prune for, it ma
 If you would like to automatically run `git fetch --all` before printing the local-prune, you can add the `-f` flag, as show below
 
 ```shell
-$ git
+$ git git local-prune -f
 ```
 
 ## Mixing options
