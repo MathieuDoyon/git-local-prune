@@ -1,6 +1,6 @@
 {
   "name": "git-local-prune",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "git locale prune gone branches on remote",
   "main": "",
   "scripts": {
