@@ -19,7 +19,7 @@ You can install `git-local-prune` using one of the options listed below
 
 ## Usage
 
-Simply run it in your project directory and it will give you the output from the last working day
+Simply run it in your project directory and it will give you the output from the branches prune locally
 
 ```shell
 git local-prune
@@ -57,7 +57,7 @@ For the basic usage, all you have to do is run `git local-prune` in a repository
 
 ## Single Repository Usage
 
-To check all your personal commits from last working day, head to the project repository and run
+To check all your local branches to prune from your last git fetch, head to the project repository and run
 
 ```shell
 $ git local-prune
@@ -92,7 +92,7 @@ project-a
 project-b
 ```
 
-## Fetch commits before showing local-prune
+## Fetch gone branches before showing local-prune
 
 If you have many repositories that you want to generate a local-prune for, it may be useful to automatically run `git fetch` before viewing the local-prune.
 
@@ -104,10 +104,10 @@ $ git local-prune -f
 
 ## Mixing options
 
-Of course you can mix the options together but please note that if you provide the number of days, it will override the weekdays configuration (`MON-FRI`) and will show you the commits specifically from `n` days ago.
+Of course you can mix the options together.
 
 ```shell
-# Show all the John Doe's commits from 5 days ago
+# Fetch branches before each local-prune command with a max depth of 5 directories
 $ git local-prune -m 5 -r -f
 ```
 
